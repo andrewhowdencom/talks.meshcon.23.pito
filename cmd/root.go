@@ -6,6 +6,8 @@ import (
 	"os"
 	"runtime"
 
+	"log/slog"
+
 	"github.com/andrewhowdencom/talks.meshcon.23.pito/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,15 +25,6 @@ var rootCmd = &cobra.Command{
 	RunE:   doRoot,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
 func init() {
 	// Define the path for the configuration file.
 	rootCmd.PersistentFlags().String("config", "/etc/.talks.meshcon.23.pito.yaml",
@@ -45,19 +38,30 @@ func init() {
 	rootCmd.SilenceErrors = true
 }
 
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	err := rootCmd.Execute()
+	if err != nil {
+		slog.Error("failed to start application", "error", err)
+		os.Exit(1)
+	}
+}
+
 // doPreRun is a series of persistent pre-execution thing that should happen. Could also go in init().
 func doPreRun(cmd *cobra.Command, args []string) {
 	viper.SetConfigFile(cmd.Flags().Lookup("config").Value.String())
 
 	if err := viper.BindPFlag("go.max-procs", cmd.Flags().Lookup("go-max-procs")); err != nil {
-		// Wow it'd be good if we did something here.
+		slog.Info("failed to bind flag", "flag", "go-max-procs", "error", err)
 	}
 
 	if err := viper.BindPFlag("server.listen-address", cmd.Flags().Lookup("listen-address")); err != nil {
-		// Sure would be good to do something here.
+		slog.Info("failed to bind flag", "flag", "server.listen-address", "error", err)
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
+		slog.Error("failed read configuration", "error", err)
 		os.Exit(1)
 	}
 
