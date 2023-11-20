@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 )
@@ -62,9 +63,21 @@ func WithTracerProvider(tp trace.TracerProvider) Option {
 }
 
 func (s *Srv) rabbit(w http.ResponseWriter, r *http.Request) {
+	_, span := s.t.Start(r.Context(), "rabbit")
+	defer span.End()
+
+	// Set default status
+	span.SetAttributes(semconv.HTTPStatusCode(http.StatusOK))
+
+	// Track some critical user information. ⚠️ In Europe, this is personal data and needs to be treated
+	// accordingly.
+	span.SetAttributes(semconv.UserAgentOriginal(r.Header.Get("User-Agent")))
+
 	// Bail out of the request is from a more nefarious character
 	usr := r.Header.Get("User-Agent")
 	if strings.Contains(usr, "Elmar Fudd") {
+		// Override the status
+		span.SetAttributes(semconv.HTTPStatusCode(http.StatusGone))
 		w.WriteHeader(http.StatusGone)
 		w.Write([]byte("Try again next time, Elmar."))
 
