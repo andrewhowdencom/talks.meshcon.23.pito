@@ -9,8 +9,11 @@ import (
 	"log/slog"
 
 	"github.com/andrewhowdencom/talks.meshcon.23.pito/server"
+	"github.com/andrewhowdencom/talks.meshcon.23.pito/telemetry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -64,6 +67,14 @@ func doPreRun(cmd *cobra.Command, args []string) {
 		slog.Error("failed read configuration", "error", err)
 		os.Exit(1)
 	}
+
+	// Setup a global tracer provider, based on this applications configuration.
+	tp, err := telemetry.NewTracerProvider()
+	if err != nil {
+		slog.Error("failed to setup tracing", "error", err)
+	}
+
+	otel.SetTracerProvider(tp)
 
 	// Set runtime constraints
 	runtime.GOMAXPROCS(viper.GetInt("go.max-procs"))
