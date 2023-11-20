@@ -5,7 +5,12 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
+
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
+
+const pkgName = "rabbit.local/server"
 
 var Quotes = []string{
 	"Eh, What's up, Doc?",
@@ -18,28 +23,45 @@ var Quotes = []string{
 	"Oh, well, we almost had a romantic ending!",
 }
 
-type Option func(srv *http.Server)
+type Srv struct {
+	t trace.Tracer
+
+	*http.Server
+}
+
+type Option func(srv *Srv)
 
 func New(o ...Option) *http.Server {
-	srv := &http.Server{
+
+	srv := &Srv{
+		t: noop.NewTracerProvider().Tracer(pkgName),
+	}
+
+	srv.Server = &http.Server{
 		Addr:    ":80",
-		Handler: http.HandlerFunc(rabbit),
+		Handler: http.HandlerFunc(srv.rabbit),
 	}
 
 	for _, opt := range o {
 		opt(srv)
 	}
 
-	return srv
+	return srv.Server
 }
 
 func WithListenAddr(addr string) Option {
-	return func(srv *http.Server) {
+	return func(srv *Srv) {
 		srv.Addr = addr
 	}
 }
 
-func rabbit(w http.ResponseWriter, r *http.Request) {
+func WithTracerProvider(tp trace.TracerProvider) Option {
+	return func(srv *Srv) {
+		srv.t = tp.Tracer(pkgName)
+	}
+}
+
+func (s *Srv) rabbit(w http.ResponseWriter, r *http.Request) {
 	// Bail out of the request is from a more nefarious character
 	usr := r.Header.Get("User-Agent")
 	if strings.Contains(usr, "Elmar Fudd") {
