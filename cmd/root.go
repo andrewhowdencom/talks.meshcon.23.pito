@@ -1,11 +1,17 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
+	"github.com/andrewhowdencom/talks.meshcon.23.pito/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+var (
+	ErrUnableToStartServer = errors.New("unable to start server")
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,5 +49,11 @@ func doPreRun(cmd *cobra.Command, args []string) {
 
 // doRoot is not yet implemented
 func doRoot(cmd *cobra.Command, args []string) error {
-	return fmt.Errorf("not implemented")
+
+	srv := server.New()
+	if err := srv.ListenAndServe(); err != nil {
+		return fmt.Errorf("%w: %s", ErrUnableToStartServer, err)
+	}
+
+	return nil
 }
