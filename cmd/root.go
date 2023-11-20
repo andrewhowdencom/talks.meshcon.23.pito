@@ -35,6 +35,7 @@ func Execute() {
 func init() {
 	// Define the path for the configuration file.
 	rootCmd.PersistentFlags().String("config", "/etc/.talks.meshcon.23.pito.yaml", "config file (default is /etc/.talks.meshcon.23.pito.yaml)")
+	rootCmd.PersistentFlags().String("listen-address", "localhost:80", "The address on which the server should listen")
 	rootCmd.PersistentFlags().Int("go-max-procs", 1, "How many processes to assign the Go runtime")
 
 	// Here, we want to demonstrate how difficult it is to reason through the program absent any sort of logging.
@@ -49,6 +50,10 @@ func doPreRun(cmd *cobra.Command, args []string) {
 		// Wow it'd be good if we did something here.
 	}
 
+	if err := viper.BindPFlag("server.listen-address", cmd.Flags().Lookup("listen-address")); err != nil {
+		// Sure would be good to do something here.
+	}
+
 	if err := viper.ReadInConfig(); err != nil {
 		os.Exit(1)
 	}
@@ -61,7 +66,7 @@ func doPreRun(cmd *cobra.Command, args []string) {
 // doRoot is not yet implemented
 func doRoot(cmd *cobra.Command, args []string) error {
 
-	srv := server.New()
+	srv := server.New(server.WithListenAddr(viper.GetString("server.listen-address")))
 	if err := srv.ListenAndServe(); err != nil {
 		return fmt.Errorf("%w: %s", ErrUnableToStartServer, err)
 	}

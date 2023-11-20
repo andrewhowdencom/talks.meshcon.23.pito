@@ -18,13 +18,25 @@ var Quotes = []string{
 	"Oh, well, we almost had a romantic ending!",
 }
 
-func New() *http.Server {
+type Option func(srv *http.Server)
+
+func New(o ...Option) *http.Server {
 	srv := &http.Server{
 		Addr:    ":80",
 		Handler: http.HandlerFunc(rabbit),
 	}
 
+	for _, opt := range o {
+		opt(srv)
+	}
+
 	return srv
+}
+
+func WithListenAddr(addr string) Option {
+	return func(srv *http.Server) {
+		srv.Addr = addr
+	}
 }
 
 func rabbit(w http.ResponseWriter, r *http.Request) {
