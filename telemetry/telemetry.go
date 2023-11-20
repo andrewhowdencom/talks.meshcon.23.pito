@@ -34,7 +34,7 @@ func NewTracerProvider() (trace.TracerProvider, error) {
 	// Setup the "application resource". This is the way in which the application is identified in OpenTelemetry,
 	// as well as any "core attributes" it has.
 	res, err := resource.New(ctx, resource.WithAttributes(
-		semconv.ServiceName("examples"),
+		semconv.ServiceName("rabbit"),
 	))
 
 	if err != nil {

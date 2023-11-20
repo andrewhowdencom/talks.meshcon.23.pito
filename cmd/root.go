@@ -84,7 +84,13 @@ func doPreRun(cmd *cobra.Command, args []string) {
 // doRoot starts the server
 func doRoot(cmd *cobra.Command, args []string) error {
 
-	srv := server.New(server.WithListenAddr(viper.GetString("server.listen-address")))
+	srv := server.New(
+		server.WithListenAddr(
+			viper.GetString("server.listen-address"),
+		),
+		server.WithTracerProvider(otel.GetTracerProvider()),
+	)
+
 	if err := srv.ListenAndServe(); err != nil {
 		return fmt.Errorf("%w: %s", ErrUnableToStartServer, err)
 	}
