@@ -43,6 +43,7 @@ func init() {
 	rootCmd.SilenceErrors = true
 }
 
+// doPreRun is a series of persistent pre-execution thing that should happen. Could also go in init().
 func doPreRun(cmd *cobra.Command, args []string) {
 	viper.SetConfigFile(cmd.Flags().Lookup("config").Value.String())
 
@@ -63,7 +64,7 @@ func doPreRun(cmd *cobra.Command, args []string) {
 
 }
 
-// doRoot is not yet implemented
+// doRoot starts the server
 func doRoot(cmd *cobra.Command, args []string) error {
 
 	srv := server.New(server.WithListenAddr(viper.GetString("server.listen-address")))
