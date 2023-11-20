@@ -1,18 +1,19 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "rabbit",
-	Short: "An application that, when queried over HTTP, returns a text Rabbit",
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Use:    "rabbit",
+	Short:  "An application that, when queried over HTTP, returns a text Rabbit",
+	PreRun: doPreRun,
+	RunE:   doRoot,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -25,13 +26,22 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// Define the path for the configuration file.
+	rootCmd.PersistentFlags().String("config", "/etc/.talks.meshcon.23.pito.yaml", "config file (default is /etc/.talks.meshcon.23.pito.yaml)")
 
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.talks.meshcon.23.pito.yaml)")
+	// Here, we want to demonstrate how difficult it is to reason through the program absent any sort of logging.
+	// Given this, we need it to "swallow" errors in the UI.
+	rootCmd.SilenceErrors = true
+}
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func doPreRun(cmd *cobra.Command, args []string) {
+	viper.SetConfigFile(cmd.Flags().Lookup("config").Value.String())
+	if err := viper.ReadInConfig(); err != nil {
+		os.Exit(1)
+	}
+}
+
+// doRoot is not yet implemented
+func doRoot(cmd *cobra.Command, args []string) error {
+	return fmt.Errorf("not implemented")
 }
